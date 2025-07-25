@@ -213,3 +213,41 @@ if st.session_state["anomalie_antwoord"]:
     st.markdown(st.session_state["anomalie_antwoord"])
 else:
     st.info("👆 Upload een CSV-bestand om te starten.")
+
+
+
+st.subheader("🧠 AI-advies per parameter")
+
+if uploaded_file:
+    numeriek = df.select_dtypes(include="number")
+
+    if st.button("Genereer advies per kolom"):
+        with st.spinner("GPT analyseert elke parameter afzonderlijk..."):
+            for kolom in numeriek.columns:
+                waarden = df[kolom].dropna().to_list()
+
+                prompt = f"""
+Je bent een expert in biologische afvalwaterzuivering. 
+Hier zijn de metingen voor de parameter '{kolom}' uit een tijdsreeks van een zuiveringsinstallatie:
+
+{waarden}
+
+1. Wat valt op in de spreiding en het niveau?
+2. Zijn er mogelijke pieken of problemen?
+3. Wat zijn mogelijke verklaringen (biologisch, hydraulisch, extern)?
+4. Welke actie of controle raad je aan?
+
+Formuleer het antwoord duidelijk en beknopt.
+"""
+
+                try:
+                    response = client.chat.completions.create(
+                        model="gpt-3.5-turbo",
+                        messages=[{"role": "user", "content": prompt}],
+                        temperature=0.3,
+                    )
+                    advies = response.choices[0].message.content
+                    st.markdown(f"### 🔎 Analyse van **{kolom}**")
+                    st.markdown(advies)
+                except Exception as e:
+                    st.error(f"Fout bij AI-analyse voor {kolom}: {e}")
