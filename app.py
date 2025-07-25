@@ -32,36 +32,36 @@ if uploaded_file:
     
         fig = go.Figure()
 
-    # Normale lijn
-    fig.add_trace(go.Scatter(
-        x=df.index,
-        y=df[kolom],
-        mode='lines+markers',
-        name='Meetwaarden',
-        marker=dict(color='blue')
-    ))
-
-    # Anomalieën in rood
-    if not outliers.empty:
+        # Normale lijn
         fig.add_trace(go.Scatter(
-            x=outliers.index,
-            y=outliers[kolom],
-            mode='markers',
-            name='Afwijkingen',
-            marker=dict(color='red', size=10, symbol='circle-open'),
-            hovertext=[f"Waarde: {v}" for v in outliers[kolom]]
+            x=df.index,
+            y=df[kolom],
+            mode='lines+markers',
+            name='Meetwaarden',
+            marker=dict(color='blue')
         ))
 
-    fig.update_layout(
-        title=f"Waarden voor {kolom}",
-        xaxis_title="Index (rijvolgorde)",
-        yaxis_title=kolom,
-        hovermode="x unified"
-    )
+        # Anomalieën in rood
+        if not outliers.empty:
+            fig.add_trace(go.Scatter(
+                x=outliers.index,
+                y=outliers[kolom],
+                mode='markers',
+                name='Afwijkingen',
+                marker=dict(color='red', size=10, symbol='circle-open'),
+                hovertext=[f"Waarde: {v}" for v in outliers[kolom]]
+            ))
 
-    st.plotly_chart(fig, use_container_width=True)
-else:
-    st.warning("Geselecteerde kolom is niet numeriek en kan niet worden geplot.")
+        fig.update_layout(
+            title=f"Waarden voor {kolom}",
+            xaxis_title="Index (rijvolgorde)",
+            yaxis_title=kolom,
+            hovermode="x unified"
+        )
+
+        st.plotly_chart(fig, use_container_width=True)
+    else:
+        st.warning("Geselecteerde kolom is niet numeriek en kan niet worden geplot.")
 
     # 🧠 Automatische GPT-analyse
     st.subheader("🧠 AI Inzichten")
