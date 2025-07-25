@@ -273,7 +273,7 @@ if uploaded_file:
             # Statistiek
             pdf.ln(5)
             pdf.set_font("Arial", "B", 12)
-            pdf.cell(0, 10, "📊 Statistiekoverzicht", ln=True)
+            pdf.cell(0, 10, "Statistiekoverzicht", ln=True)
             pdf.set_font("Courier", "", 8)
             stat_text = df.describe().round(2).to_string()
             for line in stat_text.split("\n"):
@@ -282,7 +282,7 @@ if uploaded_file:
             # AI-analyse per kolom
             pdf.ln(5)
             pdf.set_font("Arial", "B", 12)
-            pdf.cell(0, 10, "🧠 AI-advies per parameter", ln=True)
+            pdf.cell(0, 10, "AI-advies per parameter", ln=True)
             pdf.set_font("Arial", "", 10)
             numeriek = df.select_dtypes(include="number")
 
@@ -307,7 +307,7 @@ Hier zijn de metingen voor de parameter '{kolom}':
                     )
                     advies = response.choices[0].message.content
                     pdf.set_font("Arial", "B", 10)
-                    pdf.cell(0, 8, f"🔹 {kolom}", ln=True)
+                    pdf.cell(0, 8, f" {kolom}", ln=True)
                     pdf.set_font("Arial", "", 9)
                     for line in advies.split("\n"):
                         pdf.multi_cell(0, 5, line)
