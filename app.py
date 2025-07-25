@@ -25,7 +25,7 @@ if uploaded_file:
         st.warning("Geselecteerde kolom is niet numeriek en kan niet worden geplot.")
 
     st.subheader("🧠 AI Inzichten")
-  if st.button("Analyseer met GPT"):
+    if st.button("Analyseer met GPT"):
     with st.spinner("GPT analyseert de data..."):
         summary = df.describe().to_string()
 
