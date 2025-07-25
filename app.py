@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import openai
+import matplotlib.pyplot as plt
 
 # 🔑 API key ophalen uit Streamlit secrets
 client = openai.OpenAI(api_key=st.secrets["openai"]["api_key"])
@@ -17,13 +18,26 @@ if uploaded_file:
     st.subheader("🔍 Eerste 5 rijen van de data")
     st.dataframe(df.head())
 
-    # 📈 Visualisatie van kolom
+    # 📈 Visualisatie met anomalieën
     st.subheader("📈 Kolom visualisatie")
     kolommen = df.columns.tolist()
     kolom = st.selectbox("Kies een kolom", kolommen)
-
+    
     if pd.api.types.is_numeric_dtype(df[kolom]):
-        st.line_chart(df[kolom])
+        mu = df[kolom].mean()
+        sigma = df[kolom].std()
+        boven = df[kolom] > mu + 2 * sigma
+        onder = df[kolom] < mu - 2 * sigma
+        outliers = df[boven | onder]
+    
+        fig, ax = plt.subplots()
+        ax.plot(df.index, df[kolom], label="Meetwaarden", linewidth=2)
+        if not outliers.empty:
+            ax.scatter(outliers.index, outliers[kolom], color="red", label="Afwijking", zorder=5)
+        ax.set_title(f"Waarden voor {kolom}")
+        ax.set_ylabel(kolom)
+        ax.legend()
+        st.pyplot(fig)
     else:
         st.warning("Geselecteerde kolom is niet numeriek en kan niet worden geplot.")
 
