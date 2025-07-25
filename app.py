@@ -96,26 +96,27 @@ Beantwoord deze vraag helder, feitelijk, en als mogelijk met context uit afvalwa
     # 🔎 Fase 4: Automatische anomaly detection
 st.subheader("🚨 Detecteer en verklaar afwijkingen")
 
+if "anomalie_antwoord" not in st.session_state:
+    st.session_state["anomalie_antwoord"] = None
+
 if st.button("Analyseer afwijkingen met AI"):
     with st.spinner("Zoekt naar afwijkende waarden..."):
-
         anomalieën = []
-        for kolom in df.select_dtypes(include="number").columns:
-            mu = df[kolom].mean()
-            sigma = df[kolom].std()
-            boven = df[kolom] > mu + 2 * sigma
-            onder = df[kolom] < mu - 2 * sigma
+        for kol in df.select_dtypes(include="number").columns:
+            mu = df[kol].mean()
+            sigma = df[kol].std()
+            boven = df[kol] > mu + 2 * sigma
+            onder = df[kol] < mu - 2 * sigma
             afwijkend = df[boven | onder]
             if not afwijkend.empty:
-                anomalieën.append((kolom, afwijkend[[kolom]].to_dict(orient="records")))
+                anomalieën.append((kol, afwijkend[[kol]].to_dict(orient="records")))
 
         if not anomalieën:
-            st.success("Er zijn geen opvallende afwijkingen gevonden.")
+            st.session_state["anomalie_antwoord"] = "✅ Er zijn geen opvallende afwijkingen gevonden."
         else:
-            # Genereer GPT-prompt
             beschrijving = ""
-            for kolom, lijst in anomalieën:
-                beschrijving += f"\n• Kolom: {kolom}, Afwijkende waarden:\n{lijst}\n"
+            for kol, lijst in anomalieën:
+                beschrijving += f"\n• Kolom: {kol}, Afwijkende waarden:\n{lijst}\n"
 
             prompt = f"""
 Je bent een expert in biologische afvalwaterzuivering.
@@ -132,18 +133,19 @@ Geef per afwijking een mogelijke verklaring, bijvoorbeeld:
 
 Leg kort en duidelijk uit wat mogelijke oorzaken zijn.
 """
-
             try:
                 response = client.chat.completions.create(
                     model="gpt-3.5-turbo",
                     messages=[{"role": "user", "content": prompt}],
                     temperature=0.3,
                 )
-                antwoord = response.choices[0].message.content
-                st.markdown("**🧠 AI-verklaring voor afwijkingen:**")
-                st.markdown(antwoord)
+                st.session_state["anomalie_antwoord"] = response.choices[0].message.content
             except Exception as e:
-                st.error(f"Fout bij AI-analyse: {e}")
+                st.session_state["anomalie_antwoord"] = f"❌ Fout bij AI-analyse: {e}"
 
+# Toon het antwoord, ook na andere interacties
+if st.session_state["anomalie_antwoord"]:
+    st.markdown("**🧠 AI-verklaring voor afwijkingen:**")
+    st.markdown(st.session_state["anomalie_antwoord"])
 else:
     st.info("👆 Upload een CSV-bestand om te starten.")
