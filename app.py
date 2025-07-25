@@ -46,6 +46,6 @@ Geef in duidelijke en beknopte taal een analyse van wat opvalt. Richt je op tren
                 st.success("AI-analyse succesvol!")
                 st.markdown(antwoord)
             except Exception as e:
-                st.error(f"Fout bij AI-analyse: {e}"
+                st.error(f"Fout bij AI-analyse: {e}")
     else:
         st.info("👆 Upload een bestand om te beginnen.")
