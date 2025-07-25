@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import openai
 import plotly.graph_objects as go
+import plotly.express as px
 
 # 🔑 API key ophalen uit Streamlit secrets
 client = openai.OpenAI(api_key=st.secrets["openai"]["api_key"])
@@ -171,3 +172,43 @@ if st.session_state["anomalie_antwoord"]:
     st.markdown(st.session_state["anomalie_antwoord"])
 else:
     st.info("👆 Upload een CSV-bestand om te starten.")
+
+st.subheader("📊 Correlatie tussen kolommen")
+
+numeric_df = df.select_dtypes(include="number")
+
+if numeric_df.shape[1] < 2:
+    st.info("Minstens twee numerieke kolommen nodig voor correlatie.")
+else:
+    corr = numeric_df.corr()
+    fig = px.imshow(
+        corr,
+        text_auto=".2f",
+        color_continuous_scale="RdBu_r",
+        aspect="auto",
+        title="Correlatiematrix",
+        labels=dict(color="Correlatie")
+    )
+    st.plotly_chart(fig, use_container_width=True)
+
+    if st.button("🧠 Analyseer correlaties met AI"):
+        corr_text = corr.to_string()
+        prompt = f"""
+Je bent een dataspecialist in biologische afvalwaterzuivering.
+Hieronder zie je de correlatiematrix tussen meetparameters:
+
+{corr_text}
+
+Geef een beknopte uitleg van opvallende correlaties, met mogelijke oorzaken.
+Vermeld of bepaalde parameters elkaars gedrag kunnen verklaren (bijv. stijgende BZV en CZV).
+"""
+        try:
+            response = client.chat.completions.create(
+                model="gpt-3.5-turbo",
+                messages=[{"role": "user", "content": prompt}],
+                temperature=0.3,
+            )
+            st.markdown("**🤖 GPT-analyse van correlaties:**")
+            st.markdown(response.choices[0].message.content)
+        except Exception as e:
+            st.error(f"Fout bij AI-analyse: {e}")
