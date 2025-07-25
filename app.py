@@ -79,5 +79,57 @@ Beantwoord deze vraag helder, feitelijk, en als mogelijk met context uit afvalwa
             except Exception as e:
                 st.error(f"Fout bij AI-vraag: {e}")
 
+    # 🔎 Fase 4: Automatische anomaly detection
+st.subheader("🚨 Detecteer en verklaar afwijkingen")
+
+if st.button("Analyseer afwijkingen met AI"):
+    with st.spinner("Zoekt naar afwijkende waarden..."):
+
+        anomalieën = []
+        for kolom in df.select_dtypes(include="number").columns:
+            mu = df[kolom].mean()
+            sigma = df[kolom].std()
+            boven = df[kolom] > mu + 2 * sigma
+            onder = df[kolom] < mu - 2 * sigma
+            afwijkend = df[boven | onder]
+            if not afwijkend.empty:
+                anomalieën.append((kolom, afwijkend[[kolom]].to_dict(orient="records")))
+
+        if not anomalieën:
+            st.success("Er zijn geen opvallende afwijkingen gevonden.")
+        else:
+            # Genereer GPT-prompt
+            beschrijving = ""
+            for kolom, lijst in anomalieën:
+                beschrijving += f"\n• Kolom: {kolom}, Afwijkende waarden:\n{lijst}\n"
+
+            prompt = f"""
+Je bent een expert in biologische afvalwaterzuivering.
+We hebben de volgende afwijkingen gedetecteerd in meetdata:
+
+{beschrijving}
+
+Geef per afwijking een mogelijke verklaring, bijvoorbeeld:
+- meetfouten
+- overbelasting
+- biologisch probleem
+- veranderde influentkwaliteit
+- hydraulische pieken
+
+Leg kort en duidelijk uit wat mogelijke oorzaken zijn.
+"""
+
+            try:
+                response = client.chat.completions.create(
+                    model="gpt-3.5-turbo",
+                    messages=[{"role": "user", "content": prompt}],
+                    temperature=0.3,
+                )
+                antwoord = response.choices[0].message.content
+                st.markdown("**🧠 AI-verklaring voor afwijkingen:**")
+                st.markdown(antwoord)
+            except Exception as e:
+                st.error(f"Fout bij AI-analyse: {e}")
+
 else:
     st.info("👆 Upload een CSV-bestand om te starten.")
