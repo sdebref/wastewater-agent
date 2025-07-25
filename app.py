@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 import openai
-import matplotlib.pyplot as plt
+import plotly.graph_objects as go
 
 # 🔑 API key ophalen uit Streamlit secrets
 client = openai.OpenAI(api_key=st.secrets["openai"]["api_key"])
@@ -22,7 +22,7 @@ if uploaded_file:
     st.subheader("📈 Kolom visualisatie")
     kolommen = df.columns.tolist()
     kolom = st.selectbox("Kies een kolom", kolommen)
-    
+
     if pd.api.types.is_numeric_dtype(df[kolom]):
         mu = df[kolom].mean()
         sigma = df[kolom].std()
@@ -30,16 +30,38 @@ if uploaded_file:
         onder = df[kolom] < mu - 2 * sigma
         outliers = df[boven | onder]
     
-        fig, ax = plt.subplots()
-        ax.plot(df.index, df[kolom], label="Meetwaarden", linewidth=2)
-        if not outliers.empty:
-            ax.scatter(outliers.index, outliers[kolom], color="red", label="Afwijking", zorder=5)
-        ax.set_title(f"Waarden voor {kolom}")
-        ax.set_ylabel(kolom)
-        ax.legend()
-        st.pyplot(fig)
-    else:
-        st.warning("Geselecteerde kolom is niet numeriek en kan niet worden geplot.")
+        fig = go.Figure()
+
+    # Normale lijn
+    fig.add_trace(go.Scatter(
+        x=df.index,
+        y=df[kolom],
+        mode='lines+markers',
+        name='Meetwaarden',
+        marker=dict(color='blue')
+    ))
+
+    # Anomalieën in rood
+    if not outliers.empty:
+        fig.add_trace(go.Scatter(
+            x=outliers.index,
+            y=outliers[kolom],
+            mode='markers',
+            name='Afwijkingen',
+            marker=dict(color='red', size=10, symbol='circle-open'),
+            hovertext=[f"Waarde: {v}" for v in outliers[kolom]]
+        ))
+
+    fig.update_layout(
+        title=f"Waarden voor {kolom}",
+        xaxis_title="Index (rijvolgorde)",
+        yaxis_title=kolom,
+        hovermode="x unified"
+    )
+
+    st.plotly_chart(fig, use_container_width=True)
+else:
+    st.warning("Geselecteerde kolom is niet numeriek en kan niet worden geplot.")
 
     # 🧠 Automatische GPT-analyse
     st.subheader("🧠 AI Inzichten")
