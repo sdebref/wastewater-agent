@@ -38,7 +38,7 @@ Geef in duidelijke en beknopte taal een analyse van wat opvalt. Richt je op tren
 
             try:
                 response = client.chat.completions.create(
-                    model="gpt-4",
+                    model="gpt-3.5-turbo",
                     messages=[{"role": "user", "content": prompt}],
                     temperature=0.4,
                 )
