@@ -102,7 +102,7 @@ Beantwoord duidelijk en feitelijk.
 """
             try:
                 response = client.chat.completions.create(
-                    model="gpt-3.5-turbo",
+                    model="gpt-4o",
                     messages=[{"role": "user", "content": prompt}],
                     temperature=0.4,
                 )
@@ -142,7 +142,7 @@ Geef een uitleg van opvallende verbanden.
 """
             try:
                 response = client.chat.completions.create(
-                    model="gpt-3.5-turbo",
+                    model="gpt-4o",
                     messages=[{"role": "user", "content": prompt}],
                     temperature=0.3,
                 )
@@ -184,7 +184,7 @@ Wat kunnen mogelijke oorzaken zijn?
 """
                 try:
                     response = client.chat.completions.create(
-                        model="gpt-3.5-turbo",
+                        model="gpt-4o",
                         messages=[{"role": "user", "content": prompt}],
                         temperature=0.3,
                     )
@@ -217,7 +217,7 @@ Hier zijn de metingen voor '{kolom}':
 """
                 try:
                     response = client.chat.completions.create(
-                        model="gpt-3.5-turbo",
+                        model="gpt-4o",
                         messages=[{"role": "user", "content": prompt}],
                         temperature=0.3,
                     )
