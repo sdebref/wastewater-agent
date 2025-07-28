@@ -26,7 +26,7 @@ if uploaded_file:
     kolommen = df.columns.tolist()
     kolom = st.selectbox("Kies een kolom", kolommen)
 
-    if pd.api.types.is_numeric_dtype(df[kolom]):
+    if pd.api.types.is_numeric_dtype(df[kolom]): 
         mu = df[kolom].mean()
         sigma = df[kolom].std()
         boven = df[kolom] > mu + 2 * sigma
@@ -73,7 +73,7 @@ Hier zijn statistieken van een dataset met gemeten waarden:
 Geef een duidelijke en beknopte analyse van trends, afwijkingen en mogelijke conclusies."""
             try:
                 response = client.chat.completions.create(
-                    model="gpt-3.5-turbo",
+                    model="gpt-4o",
                     messages=[{"role": "user", "content": prompt}],
                     temperature=0.4,
                 )
