@@ -5,6 +5,7 @@ import plotly.graph_objects as go
 import plotly.express as px
 from fpdf import FPDF
 import tempfile
+import os
 
 # 🔑 API key ophalen uit Streamlit secrets
 client = openai.OpenAI(api_key=st.secrets["openai"]["api_key"])
@@ -228,62 +229,85 @@ Hier zijn de metingen voor '{kolom}':
                     st.error(f"Fout bij analyse van {kolom}: {e}")
 
     # 📄 PDF-rapport
+
     st.subheader("📄 Genereer PDF-rapport")
-    if st.button("📤 Maak rapport met AI-analyse"):
-        with st.spinner("Rapport wordt gegenereerd..."):
-            pdf = FPDF()
-            pdf.add_page()
-            pdf.set_auto_page_break(auto=True, margin=15)
 
-            pdf.set_font("Arial", "B", 16)
-            pdf.cell(0, 10, "Afvalwater Analyse Rapport", ln=True)
-            pdf.set_font("Arial", "", 12)
-            pdf.cell(0, 10, f"Bestand: {uploaded_file.name}", ln=True)
+    if uploaded_file:
+        if st.button("📤 Maak rapport met AI-analyse"):
+            with st.spinner("Rapport wordt gegenereerd..."):
+                pdf = FPDF()
+                pdf.add_page()
+                pdf.set_auto_page_break(auto=True, margin=15)
 
-            pdf.ln(5)
-            pdf.set_font("Arial", "B", 12)
-            pdf.cell(0, 10, "Statistiekoverzicht", ln=True)
-            pdf.set_font("Courier", "", 8)
-            stat_text = df.describe().round(2).to_string()
-            for line in stat_text.split("\n"):
-                pdf.cell(0, 5, line, ln=True)
+                # ✅ Unicode-compatibel lettertype
+                font_path = "DejaVuSans.ttf"
+                if not os.path.exists(font_path):
+                    st.error("❌ Fontbestand 'DejaVuSans.ttf' niet gevonden.")
+                else:
+                    pdf.add_font("DejaVu", "", font_path, uni=True)
+                    pdf.set_font("DejaVu", "", 12)
 
-            pdf.ln(5)
-            pdf.set_font("Arial", "B", 12)
-            pdf.cell(0, 10, "AI-advies per parameter", ln=True)
-            pdf.set_font("Arial", "", 10)
+                    # Titel
+                    pdf.set_font("DejaVu", "B", 16)
+                    pdf.cell(0, 10, "Afvalwater Analyse Rapport", ln=True)
+                    pdf.set_font("DejaVu", "", 12)
+                    pdf.cell(0, 10, f"Bestand: {uploaded_file.name}", ln=True)
 
-            for kolom in numeriek.columns:
-                waarden = df[kolom].dropna().to_list()
-                prompt = f"""
-Je bent een expert in afvalwaterzuivering. Analyseer '{kolom}':
+                    # Statistiek
+                    pdf.ln(5)
+                    pdf.set_font("DejaVu", "B", 12)
+                    pdf.cell(0, 10, "Statistiekoverzicht", ln=True)
+                    pdf.set_font("DejaVu", "", 9)
+                    stat_text = df.describe().round(2).to_string()
+                    for line in stat_text.split("\n"):
+                        pdf.cell(0, 5, line, ln=True)
+
+                    # AI-analyse per kolom
+                    pdf.ln(5)
+                    pdf.set_font("DejaVu", "B", 12)
+                    pdf.cell(0, 10, "AI-advies per parameter", ln=True)
+                    pdf.set_font("DejaVu", "", 10)
+                    numeriek = df.select_dtypes(include="number")
+
+                    for kolom in numeriek.columns:
+                        waarden = df[kolom].dropna().to_list()
+                        prompt = f"""
+Je bent een expert in biologische afvalwaterzuivering. 
+Hier zijn de metingen voor de parameter '{kolom}':
+
 {waarden}
-"""
-                try:
-                    response = client.chat.completions.create(
-                        model="gpt-3.5-turbo",
-                        messages=[{"role": "user", "content": prompt}],
-                        temperature=0.3,
-                    )
-                    advies = response.choices[0].message.content
-                    pdf.set_font("Arial", "B", 10)
-                    pdf.cell(0, 8, f"{kolom}", ln=True)
-                    pdf.set_font("Arial", "", 9)
-                    for line in advies.split("\n"):
-                        pdf.multi_cell(0, 5, line)
-                        pdf.ln(0.5)
-                except Exception as e:
-                    pdf.set_font("Arial", "I", 9)
-                    pdf.cell(0, 6, f"[Fout bij {kolom}]: {e}", ln=True)
 
-            with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmpfile:
-                pdf.output(tmpfile.name)
-                st.success("✅ Rapport klaar")
-                st.download_button(
-                    label="📥 Download PDF",
-                    data=open(tmpfile.name, "rb").read(),
-                    file_name="rapport_afvalwater_ai.pdf",
-                    mime="application/pdf"
-                )
+1. Wat valt op?
+2. Zijn er problemen?
+3. Wat zijn mogelijke verklaringen?
+4. Welke actie raad je aan?
+"""
+                        try:
+                            response = client.chat.completions.create(
+                                model="gpt-3.5-turbo",
+                                messages=[{"role": "user", "content": prompt}],
+                                temperature=0.3,
+                            )
+                            advies = response.choices[0].message.content
+                            pdf.set_font("DejaVu", "B", 10)
+                            pdf.cell(0, 8, f"{kolom}", ln=True)
+                            pdf.set_font("DejaVu", "", 9)
+                            for line in advies.split("\n"):
+                                pdf.multi_cell(0, 5, line)
+                                pdf.ln(0.5)
+                        except Exception as e:
+                            pdf.set_font("DejaVu", "I", 9)
+                            pdf.cell(0, 6, f"[Fout bij {kolom}]: {e}", ln=True)
+
+                    # Opslaan naar tijdelijk bestand
+                    with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmpfile:
+                        pdf.output(tmpfile.name)
+                        st.success("✅ Rapport klaar voor download")
+                        st.download_button(
+                            label="📥 Download PDF",
+                            data=open(tmpfile.name, "rb").read(),
+                            file_name="rapport_afvalwater_ai.pdf",
+                            mime="application/pdf"
+                        )
 else:
     st.info("👆 Upload een CSV-bestand om te starten.")
