@@ -244,10 +244,10 @@ Hier zijn de metingen voor '{kolom}':
                 if not os.path.exists(font_path):
                     st.error("❌ Fontbestand 'DejaVuSans.ttf' niet gevonden.")
                 else:
-                    pdf.add_font("DejaVu", "", "/DejaVuSans.ttf", uni=True)
-                    pdf.add_font("DejaVu", "B", "/DejaVuSans-Bold.ttf", uni=True)
-                    pdf.add_font("DejaVu", "I", "/DejaVuSans-Oblique.ttf", uni=True)
-                    pdf.add_font("DejaVu", "BI", "/DejaVuSans-BoldOblique.ttf", uni=True)
+                    pdf.add_font("DejaVu", "", "DejaVuSans.ttf", uni=True)
+                    pdf.add_font("DejaVu", "B", "DejaVuSans-Bold.ttf", uni=True)
+                    pdf.add_font("DejaVu", "I", "DejaVuSans-Oblique.ttf", uni=True)
+                    pdf.add_font("DejaVu", "BI", "DejaVuSans-BoldOblique.ttf", uni=True)
                     pdf.set_font("DejaVu", "", 12)
 
                     # Titel
