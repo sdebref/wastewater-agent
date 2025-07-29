@@ -22,44 +22,65 @@ if uploaded_file:
     st.subheader("🔍 Eerste 5 rijen van de data")
     st.dataframe(df.head())
 
-    # 📈 Visualisatie met anomalieën
+    # 📈 Verbeterde visualisatie met multi-select en anomaly detectie
     st.subheader("📈 Kolom visualisatie")
     kolommen = df.columns.tolist()
-    kolom = st.selectbox("Kies een kolom", kolommen)
+    geselecteerde_kolommen = st.multiselect("Kies één of meerdere kolommen", kolommen, default=[kolommen[0]])
 
-    if pd.api.types.is_numeric_dtype(df[kolom]): 
-        mu = df[kolom].mean()
-        sigma = df[kolom].std()
-        boven = df[kolom] > mu + 2 * sigma
-        onder = df[kolom] < mu - 2 * sigma
-        outliers = df[boven | onder]
-
+    if geselecteerde_kolommen:
         fig = go.Figure()
-        fig.add_trace(go.Scatter(
-            x=df.index,
-            y=df[kolom],
-            mode='lines+markers',
-            name='Meetwaarden',
-            marker=dict(color='blue')
-        ))
-        if not outliers.empty:
+        kleuren = px.colors.qualitative.Plotly
+
+        for i, kolom in enumerate(geselecteerde_kolommen):
+            if not pd.api.types.is_numeric_dtype(df[kolom]):
+                st.warning(f"Kolom '{kolom}' is niet numeriek en wordt overgeslagen.")
+                continue
+
+            mu = df[kolom].mean()
+            sigma = df[kolom].std()
+            boven = df[kolom] > mu + 2 * sigma
+            onder = df[kolom] < mu - 2 * sigma
+            outliers = df[boven | onder]
+
+            # Normale data
             fig.add_trace(go.Scatter(
-                x=outliers.index,
-                y=outliers[kolom],
-                mode='markers',
-                name='Afwijkingen',
-                marker=dict(color='red', size=10, symbol='circle-open'),
-                hovertext=[f"Waarde: {v}" for v in outliers[kolom]]
+                x=df.index,
+                y=df[kolom],
+                mode='lines+markers',
+                name=f"{kolom}",
+                marker=dict(color=kleuren[i % len(kleuren)], size=6),
+                hovertemplate=f"<b>{kolom}</b><br>Index: %{{x}}<br>Waarde: %{{y}}<extra></extra>"
             ))
+
+            # Anomalieën
+            if not outliers.empty:
+                fig.add_trace(go.Scatter(
+                    x=outliers.index,
+                    y=outliers[kolom],
+                    mode='markers',
+                    name=f"{kolom} (afwijking)",
+                    marker=dict(color='red', size=10, symbol='circle-open'),
+                    hovertext=[f"Waarde: {v}" for v in outliers[kolom]],
+                    hoverinfo="text"
+                ))
+
         fig.update_layout(
-            title=f"Waarden voor {kolom}",
-            xaxis_title="Index",
-            yaxis_title=kolom,
-            hovermode="x unified"
+            title="Visualisatie van geselecteerde kolommen",
+            xaxis_title="Index (rijvolgorde)",
+            yaxis_title="Waarde",
+            hovermode="x unified",
+            legend=dict(
+                orientation="h",
+                yanchor="bottom",
+                y=1.02,
+                xanchor="right",
+                x=1
+            )
         )
+
         st.plotly_chart(fig, use_container_width=True)
     else:
-        st.warning("Geselecteerde kolom is niet numeriek en kan niet worden geplot.")
+        st.info("Selecteer minstens één numerieke kolom om de grafiek te tonen.")
 
     # 🧠 Automatische GPT-analyse
     st.subheader("🧠 AI Inzichten")
